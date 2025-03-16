@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  verve-service:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_ADDR=:8080
+      - REDIS_ADDR=redis:6379
+      - KAFKA_ENABLED=true
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC=verve-stats
+      - LOG_FILE_PATH=/app/host/stats.log
+    volumes:
+      - ./:/app/host
+    depends_on:
+      - redis
+      - kafka
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    restart: unless-stopped
+
+volumes:
+  redis-data:
