@@ -49,7 +49,7 @@ func Load() (*Config, error) {
 	cfg.Kafka.Topic = getEnv("KAFKA_TOPIC", "verve-stats")
 
 	// LOG file path
-	cfg.LogFilePath = getEnv("LOG_FILE_PATH", "/app/host/stats.log")
+	cfg.LogFilePath = getEnv("LOG_FILE_PATH", "./stats.log")
 	// Stats configuration
 	cfg.Stats.FlushInterval = getDurationEnv("STATS_FLUSH_INTERVAL", 60*time.Second)
 

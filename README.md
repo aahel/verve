@@ -4,6 +4,7 @@
 
 - Go
 - Docker and Docker Compose (for containerized deployment)
+- Redis and Kafka (if running without Docker)
 
 ## Option 1: Using Docker Compose (Recommended)
 This is the simplest way to run the entire stack including Redis and Kafka:
@@ -21,7 +22,7 @@ This will start:
 
 ### Test the endpoint:
 ```bash
-curl "http://localhost:8080/api/verve/accept?id=123&endpoint=http://example.com/callback"
+curl "http://localhost:8080/api/verve/accept?id=123&endpoint=https://webhook.site/acca7e6e-d531-4f0a-81c3-dcd8a52ca04b"
 ```
 
 ## Option 2: Running Locally
@@ -35,7 +36,11 @@ curl "http://localhost:8080/api/verve/accept?id=123&endpoint=http://example.com/
    ```bash
    docker run -d -p 2181:2181 -p 9092:9092 -e ADVERTISED_HOST=localhost confluentinc/cp-kafka:latest
    ```
-
+   Also make sure to set `KAFKA_ENABLED` env var to `true`.
+   ```bash
+   export KAFKA_ENABLED=true
+   ```
+   
 3. Install the dependencies:
    ```bash
    go mod tidy
@@ -48,7 +53,7 @@ curl "http://localhost:8080/api/verve/accept?id=123&endpoint=http://example.com/
 
 5. Test the endpoint:
    ```bash
-   curl "http://localhost:8080/api/verve/accept?id=123&endpoint=http://example.com/callback"
+   curl "http://localhost:8080/api/verve/accept?id=123&endpoint=https://webhook.site/acca7e6e-d531-4f0a-81c3-dcd8a52ca04b"
    ```
 
 ## Environment Variables
@@ -63,9 +68,9 @@ You can customize the application behavior with these environment variables:
 | `REDIS_ADDR` | Redis address | `localhost:6379` |
 | `REDIS_PASSWORD` | Redis password | _(empty)_ |
 | `REDIS_DB` | Redis database number | `0` |
-| `KAFKA_ENABLED` | Enable Kafka producer | `false` |
+| `KAFKA_ENABLED` | Enable Kafka producer | `true` |
 | `KAFKA_BROKER` | Kafka broker address | `localhost:9092` |
 | `KAFKA_TOPIC` | Kafka topic name | `verve-stats` |
 | `STATS_FLUSH_INTERVAL` | Interval for stats processing | `60s` |
-| `LOG_FILE_PATH` | Path to log file.Will be used only if `KAFKA_ENABLED` is false. | `/app/host/stats.log` |
+| `LOG_FILE_PATH` | Path to log file.Will be used only if `KAFKA_ENABLED` is false. | `./stats.log` |
 
