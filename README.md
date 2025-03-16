@@ -4,7 +4,6 @@
 
 - Go
 - Docker and Docker Compose (for containerized deployment)
-- Redis and Kafka (if running without Docker)
 
 ## Option 1: Using Docker Compose (Recommended)
 This is the simplest way to run the entire stack including Redis and Kafka:
