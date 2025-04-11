@@ -48,12 +48,13 @@ func (c *Collector) ProcessRequest(id int64, endpoint string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Store the endpoint for later use (if provided)
+	// Send notification to endpoint (if provided)
 	if endpoint != "" {
-		err := c.idStore.StoreEndpoint(ctx, now, endpoint)
+		uniqueCount, err := c.getIDCountForDuation(ctx, now)
 		if err != nil {
-			return fmt.Errorf("failed to store endpoint: %w", err)
+			return fmt.Errorf("failed to get count: %w", err)
 		}
+		go c.sendHTTPNotification(endpoint, uniqueCount)
 	}
 
 	// Add id to the set of unique ids for this minute
@@ -75,53 +76,44 @@ func (c *Collector) Run() {
 	}
 }
 
+func (c *Collector) getIDCountForDuation(ctx context.Context, dur time.Time) (int64, error) {
+	// Get count of unique IDs
+	uniqueCount, err := c.idStore.CountIDs(ctx, dur)
+	if err != nil {
+		c.logger.Printf("Failed to get unique count: %v", err)
+		return 0, err
+	}
+	return uniqueCount, nil
+}
+
 // processMinuteStats processes the stats for the previous minute
 func (c *Collector) processMinuteStats() {
-	// Get the previous minute timestamp
-	prevMinute := time.Now().Add(-c.flushInterval).Truncate(time.Minute)
 
+	// Get the previous minute timestamp
+	prevMinute := time.Now().Add(-60 * time.Second).Truncate(time.Minute)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Get count of unique IDs
-	uniqueCount, err := c.idStore.CountIDs(ctx, prevMinute)
+	uniqueCount, err := c.getIDCountForDuation(ctx, prevMinute)
 	if err != nil {
-		c.logger.Printf("Failed to get unique count: %v", err)
 		return
 	}
-
 	// Write stats to the configured writer
 	err = c.writer.WriteStats(ctx, prevMinute, uniqueCount)
 	if err != nil {
 		c.logger.Printf("Failed to write stats: %v", err)
 	}
 
-	// Send HTTP POST if endpoint was provided
-	c.sendHTTPNotification(prevMinute, uniqueCount)
 }
 
 // sendHTTPNotification sends stats via HTTP POST if an endpoint was provided
-func (c *Collector) sendHTTPNotification(timestamp time.Time, count int64) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// Try to get the endpoint for this minute
-	endpoint, err := c.idStore.GetEndpoint(ctx, timestamp)
-	if err != nil {
-		c.logger.Printf("Failed to get endpoint: %v", err)
-		return
-	}
-
-	if endpoint == "" {
-		// No endpoint stored for this minute
-		return
-	}
+func (c *Collector) sendHTTPNotification(endpoint string, count int64) {
 
 	// Add count as a query parameter
 	url := fmt.Sprintf("%s?count=%d", endpoint, count)
 
 	// Send HTTP POST request
-	resp, err := c.httpClient.Post(url, "text/plain", nil)
+	resp, err := c.httpClient.Post(url, "application/json", nil)
 	if err != nil {
 		c.logger.Printf("Failed to send HTTP POST to endpoint %s: %v", endpoint, err)
 		return

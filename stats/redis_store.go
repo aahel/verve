@@ -69,34 +69,6 @@ func (s *RedisIDStore) CountIDs(ctx context.Context, minuteTimestamp time.Time) 
 	return count, nil
 }
 
-// StoreEndpoint stores an endpoint for a specific minute
-func (s *RedisIDStore) StoreEndpoint(ctx context.Context, minuteTimestamp time.Time, endpoint string) error {
-	endpointKey := fmt.Sprintf("verve:endpoint:%d", minuteTimestamp.Unix())
-
-	// Store the endpoint
-	err := s.client.Set(ctx, endpointKey, endpoint, 2*time.Hour).Err()
-	if err != nil {
-		return fmt.Errorf("failed to store endpoint: %w", err)
-	}
-
-	return nil
-}
-
-// GetEndpoint retrieves an endpoint for a specific minute
-func (s *RedisIDStore) GetEndpoint(ctx context.Context, minuteTimestamp time.Time) (string, error) {
-	endpointKey := fmt.Sprintf("verve:endpoint:%d", minuteTimestamp.Unix())
-
-	// Get the endpoint
-	endpoint, err := s.client.Get(ctx, endpointKey).Result()
-	if err == redis.Nil {
-		return "", nil // No endpoint stored
-	} else if err != nil {
-		return "", fmt.Errorf("failed to get endpoint from Redis: %w", err)
-	}
-
-	return endpoint, nil
-}
-
 // Close cleans up resources
 func (s *RedisIDStore) Close() error {
 	return s.client.Close()

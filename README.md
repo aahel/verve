@@ -22,7 +22,7 @@ This will start:
 
 ### Test the endpoint:
 ```bash
-curl "http://localhost:8080/api/verve/accept?id=123&endpoint=https://webhook.site/acca7e6e-d531-4f0a-81c3-dcd8a52ca04b"
+curl "http://localhost:8080/api/verve/accept?id=123&endpoint=https://webhook.site/b07a22a4-148c-4426-8f42-6c52b213a9b3"
 ```
 
 ## Option 2: Running Locally

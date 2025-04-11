@@ -31,12 +31,6 @@ type IDStore interface {
 	// CountIDs counts unique IDs for a specific minute
 	CountIDs(ctx context.Context, minuteTimestamp time.Time) (int64, error)
 
-	// StoreEndpoint stores an endpoint for a specific minute
-	StoreEndpoint(ctx context.Context, minuteTimestamp time.Time, endpoint string) error
-
-	// GetEndpoint retrieves an endpoint for a specific minute
-	GetEndpoint(ctx context.Context, minuteTimestamp time.Time) (string, error)
-
 	// Close cleans up resources
 	Close() error
 }
